@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>10월 지점장 시책 시뮬레이터</title>
+<style>
+:root{--red:#9b1c1c;--red2:#c62828;--pink:#fdeaea;--ink:#1c1c1e;--sub:#6b6b70;--line:#e6e2e2;--bg:#f6f4f3;--card:#fff;--ok:#1b7f4b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:15px;line-height:1.45}
+header{background:var(--red);color:#fff;padding:14px 16px}
+header h1{margin:0;font-size:19px}
+header p{margin:3px 0 0;font-size:12.5px;opacity:.85}
+main{max-width:760px;margin:0 auto;padding:12px 12px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+.card h2{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--pink);color:var(--red)}
+.tag.auto{background:#e6f4ec;color:var(--ok)}
+.desc{font-size:12.5px;color:var(--sub);margin:0 0 10px}
+.pick{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+select,input[type=number],input[type=text]{width:100%;font:inherit;padding:9px 10px;border:1px solid #cfc9c9;border-radius:8px;background:#fff;color:var(--ink)}
+input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
+input:focus,select:focus{outline:2px solid var(--red2);outline-offset:1px}
+label.f{display:block;font-size:12.5px;color:var(--sub)}
+label.f span{display:block;margin-bottom:3px}
+.grid{display:grid;gap:8px}
+.g2{grid-template-columns:1fr 1fr}.g4{grid-template-columns:repeat(4,1fr)}
+.res{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:14px}
+.res b{font-size:17px;color:var(--red);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hint{font-size:12.5px;color:var(--ok);margin-top:6px}
+.warn{font-size:12.5px;color:var(--red2);margin-top:6px}
+.sum{position:sticky;top:0;z-index:5;background:var(--red);color:#fff;border:0;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.sum .big{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.sum .row{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;opacity:.92;margin-top:2px}
+.sum small{opacity:.85;font-size:12.5px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--red);color:#fff;font-weight:600;padding:6px 4px;font-size:12.5px}
+td{padding:5px 4px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+td:first-child,th:first-child{text-align:left}
+td input[type=number]{padding:6px;width:100px}
+td input[type=text]{padding:6px;width:92px}
+tr.edit td{background:#fff9e6}
+.tw{overflow-x:auto}
+h3{margin:14px 0 6px;font-size:14px}
+h3 small{font-weight:400;color:var(--sub)}
+button{font:inherit;padding:8px 12px;border-radius:8px;border:1px solid var(--red);background:#fff;color:var(--red);cursor:pointer}
+button.p{background:var(--red);color:#fff}
+button.s{padding:4px 8px;font-size:12.5px}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:14px}
+.chk input{margin-top:3px;width:17px;height:17px;accent-color:var(--red)}
+.brk td{padding:6px 2px}.brk tr.t td{font-weight:700;border-top:2px solid var(--ink);border-bottom:0}
+details summary{cursor:pointer;font-weight:700}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#st{font-size:12.5px;color:var(--sub);margin-top:8px;white-space:pre-line}
+@media(max-width:520px){.g4{grid-template-columns:1fr 1fr}.pick{grid-template-columns:1fr}.sum .big{font-size:22px}}
+</style>
+</head>
+<body>
+<header><h1>10월 지점장 시책 시뮬레이터</h1><p id="asof"></p></header>
+<main>
+<div class="card"><div class="pick">
+<label class="f"><span>센터</span><select id="cen"></select></label>
+<label class="f"><span>지점장</span><select id="br"></select></label>
+</div></div>
+<div id="app"></div>
+<div class="card"><details><summary>관리자 · raw 파일 올리기</summary>
+<p class="desc" style="margin-top:8px">시책 진척 raw CSV(파트너스 선착순 / 교차 선착순 지점장별)를 여러 개 한 번에 선택하세요. 종류는 헤더로 자동 판별합니다. 올린 뒤 <b>배포용 HTML 저장</b>을 누르면 데이터가 내장된 파일이 내려받아집니다.</p>
+<input type="file" id="fi" multiple accept=".csv,.txt,.tsv">
+<div class="btns"><button class="p" id="exp">배포용 HTML 저장</button><button id="rst">내 입력값 초기화</button></div>
+<div id="st"></div></details></div>
+</main>
+<script id="raw" type="application/json">{"ts": 1790924602389, "asof": "2026.10.2", "cx": {"tot": {"s": 5754860, "a": 3050000}, "rows": [{"r": 40, "c": "파트너스대구경북센터", "b": "영주(김종현)", "id": "325023883", "n": "정명숙", "s": 52130, "a": 30000}, {"r": 39, "c": "파트너스서울센터", "b": "서울역(김희연)", "id": "315002805", "n": "김희자", "s": 87800, "a": 30000}, {"r": 38, "c": "파트너스서울센터", "b": "일산(윤선화)", "id": "318009563", "n": "김철이", "s": 66680, "a": 30000}, {"r": 37, "c": "파트너스서울센터", "b": "서울역(성봉현)", "id": "521000542", "n": "성봉현보험대리점", "s": 190020, "a": 200000}, {"r": 36, "c": "파트너스강남센터", "b": "원주(배서윤)", "id": "318002129", "n": "박선영", "s": 50000, "a": 30000}, {"r": 35, "c": "파트너스서울센터", "b": "노원(안혜선)", "id": "318009386", "n": "유리수", "s": 67630, "a": 30000}, {"r": 34, "c": "파트너스대구경북센터", "b": "대구(송혜영)", "id": "320018093", "n": "이진화", "s": 81160, "a": 30000}, {"r": 33, "c": "파트너스부산경남센터", "b": "제주(김미자)", "id": "308078933", "n": "채정미", "s": 75650, "a": 30000}, {"r": 32, "c": "파트너스서울센터", "b": "신도림(송지연)", "id": "319001427", "n": "김운경", "s": 130010, "a": 100000}, {"r": 31, "c": "파트너스충청센터", "b": "청주(모선희)", "id": "308042922", "n": "이상길", "s": 84580, "a": 30000}, {"r": 30, "c": "파트너스경인센터", "b": "안양(남영숙)", "id": "308049750", "n": "황선희", "s": 51810, "a": 30000}, {"r": 29, "c": "파트너스경인센터", "b": "수원(이정화)", "id": "319014879", "n": "박미희", "s": 95730, "a": 30000}, {"r": 28, "c": "파트너스경인센터", "b": "평촌(문경숙)", "id": "324017949", "n": "CUI YILI", "s": 134940, "a": 100000}, {"r": 27, "c": "파트너스경인센터", "b": "안양(남영숙)", "id": "319002267", "n": "김옥순", "s": 59840, "a": 30000}, {"r": 26, "c": "파트너스충청센터", "b": "천안(김진석)", "id": "521000533", "n": "김진석", "s": 56050, "a": 30000}, {"r": 25, "c": "파트너스경인센터", "b": "수원(이정화)", "id": "326003878", "n": "이정화", "s": 79650, "a": 30000}, {"r": 24, "c": "파트너스부산경남센터", "b": "마산(은선숙)", "id": "326021599", "n": "양점조", "s": 60000, "a": 30000}, {"r": 23, "c": "파트너스강남센터", "b": "분당(우미영)", "id": "308054133", "n": "전춘분", "s": 169960, "a": 200000}, {"r": 22, "c": "파트너스부산경남센터", "b": "제주(김미자)", "id": "308083562", "n": "임혜숙", "s": 79650, "a": 30000}, {"r": 21, "c": "파트너스서울센터", "b": "일산(윤선화)", "id": "317001290", "n": "이선수", "s": 84170, "a": 30000}, {"r": 20, "c": "파트너스부산경남센터", "b": "마산(은선숙)", "id": "324001384", "n": "이화정", "s": 67240, "a": 30000}, {"r": 19, "c": "파트너스부산경남센터", "b": "마산(은선숙)", "id": "318005379", "n": "양수경", "s": 104260, "a": 100000}, {"r": 18, "c": "파트너스경인센터", "b": "부천(윤미종)", "id": "313251809", "n": "박영희", "s": 153100, "a": 200000}, {"r": 17, "c": "파트너스대구경북센터", "b": "구미(이길남)", "id": "317006624", "n": "송주연", "s": 99770, "a": 30000}, {"r": 16, "c": "파트너스경인센터", "b": "평촌(문경숙)", "id": "323006098", "n": "문삼제", "s": 50000, "a": 30000}, {"r": 15, "c": "파트너스대구경북센터", "b": "구미(고애경)", "id": "321003351", "n": "김창희", "s": 164950, "a": 200000}, {"r": 14, "c": "파트너스강남센터", "b": "강릉(양경미)", "id": "319000861", "n": "김재영", "s": 50000, "a": 30000}, {"r": 13, "c": "파트너스강남센터", "b": "삼성(유영아)", "id": "308082051", "n": "윤석범", "s": 174040, "a": 200000}, {"r": 12, "c": "파트너스부산경남센터", "b": "마산(은선숙)", "id": "326020306", "n": "백예슬", "s": 120840, "a": 100000}, {"r": 11, "c": "파트너스충청센터", "b": "천안(김진석)", "id": "320017113", "n": "송광섭", "s": 77790, "a": 30000}, {"r": 10, "c": "파트너스부산경남센터", "b": "부산(황미령)", "id": "317008778", "n": "이정원", "s": 118410, "a": 100000}, {"r": 9, "c": "파트너스부산경남센터", "b": "울산(황미순)", "id": "319002476", "n": "김옥렬", "s": 139540, "a": 100000}, {"r": 8, "c": "파트너스경인센터", "b": "평촌(문경숙)", "id": "321008013", "n": "이명숙", "s": 200000, "a": 200000}, {"r": 7, "c": "파트너스충청센터", "b": "청주(모선희)", "id": "314000512", "n": "이은미", "s": 51210, "a": 30000}, {"r": 6, "c": "파트너스강남센터", "b": "원주(배서윤)", "id": "310031767", "n": "박숙", "s": 109550, "a": 100000}, {"r": 5, "c": "파트너스강남센터", "b": "삼성(유영아)", "id": "311020545", "n": "한경식", "s": 70000, "a": 30000}, {"r": 4, "c": "파트너스부산경남센터", "b": "부산(황미령)", "id": "326019579", "n": "김한나", "s": 62880, "a": 30000}, {"r": 3, "c": "파트너스부산경남센터", "b": "부산(안성임)", "id": "326021032", "n": "이순복", "s": 60980, "a": 30000}, {"r": 2, "c": "파트너스부산경남센터", "b": "창원(김자람)", "id": "324012282", "n": "김혜원", "s": 443980, "a": 200000}, {"r": 1, "c": "파트너스경인센터", "b": "평택(채성은)", "id": "316003544", "n": "김수현", "s": 200000, "a": 200000}, {"r": 0, "c": "파트너스강남센터", "b": "삼성(김경주)", "id": "325010579", "n": "서정아", "s": 40610, "a": 0}, {"r": 0, "c": "파트너스강남센터", "b": "삼성(김경주)", "id": "325024281", "n": "송승규", "s": 10000, "a": 0}, {"r": 0, "c": "파트너스강남센터", "b": "삼성(우해준)", "id": "321004909", "n": "이미라", "s": 23440, "a": 0}, {"r": 0, "c": "파트너스강남센터", "b": "삼성(우해준)", "id": "322006354", "n": "정말자", "s": 24100, "a": 0}, {"r": 0, "c": "파트너스강남센터", "b": "삼성(유영아)", "id": "317007361", "n": "채희선", "s": 26740, "a": 0}, {"r": 0, "c": "파트너스강남센터", "b": "삼성(이양숙)", "id": "324000003", "n": "이승언", "s": 24220, "a": 0}, {"r": 0, "c": "파트너스강남센터", "b": "삼성(전영표)", "id": "308079872", "n": "김혜순", "s": 23630, "a": 0}, {"r": 0, "c": "파트너스강남센터", "b": "삼성(전영표)", "id": "318003564", "n": "김현우", "s": 15280, "a": 0}, {"r": 0, "c": "파트너스강남센터", "b": "원주(배서윤)", "id": "319015139", "n": "박선자", "s": 21150, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "노원(안혜선)", "id": "316002949", "n": "윤태룡", "s": 19690, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "노원(안혜선)", "id": "317008761", "n": "심용구", "s": 36880, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "노원(안혜선)", "id": "524000090", "n": "박준상엠보험대리점", "s": 30810, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "서울역(김희연)", "id": "312040401", "n": "김태연", "s": 10000, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "서울역(김희연)", "id": "316006528", "n": "이도연", "s": 48030, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "서울역(임춘희)", "id": "319006282", "n": "임영학", "s": 11820, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "신도림(송지연)", "id": "318003308", "n": "지영미", "s": 20000, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "신도림(송지연)", "id": "318009550", "n": "박원순", "s": 23820, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "일산(윤선화)", "id": "317001293", "n": "한현경", "s": 12420, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "파주(김인숙)", "id": "324010381", "n": "강현희", "s": 25310, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "파주(김인숙)", "id": "326016155", "n": "김인숙", "s": 30270, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "부천(송영숙)", "id": "323008645", "n": "이미숙", "s": 32480, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "부천(윤미종)", "id": "309014477", "n": "신동원", "s": 31140, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "부천(윤미종)", "id": "312026209", "n": "김지훈", "s": 6780, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "부천(윤미종)", "id": "326000878", "n": "탁영선", "s": 12720, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "수원(이정화)", "id": "316000161", "n": "임정홍", "s": 22920, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "수원(이정화)", "id": "318002158", "n": "양희원", "s": 15560, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "수원(이정화)", "id": "325022511", "n": "이미영", "s": 40000, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "안양(남영숙)", "id": "319017645", "n": "차순매", "s": 28000, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "안양(남영숙)", "id": "322006231", "n": "정순옥", "s": 11100, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "인천(나종숙)", "id": "326021586", "n": "홍하나", "s": 45160, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "평택(채성은)", "id": "521000597", "n": "채성은", "s": 20050, "a": 0}, {"r": 0, "c": "파트너스충청센터", "b": "천안(김진석)", "id": "308092525", "n": "한미숙", "s": 0, "a": 0}, {"r": 0, "c": "파트너스충청센터", "b": "천안(김진석)", "id": "315000669", "n": "민종임", "s": 30000, "a": 0}, {"r": 0, "c": "파트너스충청센터", "b": "천안(김진석)", "id": "319015099", "n": "김경순", "s": 30380, "a": 0}, {"r": 0, "c": "파트너스충청센터", "b": "청주(모선희)", "id": "316006930", "n": "정재욱", "s": 25460, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "거제(이윤주)", "id": "326018330", "n": "이윤주", "s": 35170, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "마산(은선숙)", "id": "312042174", "n": "정경숙", "s": 33220, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "마산(은선숙)", "id": "319017642", "n": "강선애", "s": 30000, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "마산(은선숙)", "id": "319019999", "n": "정홍남", "s": 30000, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "마산(은선숙)", "id": "323009062", "n": "박세영", "s": 30000, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(박문희)", "id": "326019984", "n": "김효정", "s": 15120, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(안성임)", "id": "315000510", "n": "이정영", "s": 20970, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(하미정)", "id": "323007101", "n": "김현정", "s": 23350, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(황미령)", "id": "322008307", "n": "김경화", "s": 10150, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(황미령)", "id": "323007150", "n": "강은섭", "s": 20600, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "울산(황미순)", "id": "321010116", "n": "허윤경", "s": 34830, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "울산(황미순)", "id": "321015020", "n": "이연숙", "s": 31720, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "울산(황미순)", "id": "324003285", "n": "최은지", "s": 20000, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "제주(김미자)", "id": "317008427", "n": "강희선", "s": 40000, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "창원(김자람)", "id": "320001830", "n": "김태희", "s": 47780, "a": 0}, {"r": 0, "c": "파트너스대구경북센터", "b": "경주(황영미)", "id": "521000560", "n": "황영미", "s": 8880, "a": 0}, {"r": 0, "c": "파트너스대구경북센터", "b": "구미(고애경)", "id": "308055589", "n": "김재옥", "s": 34220, "a": 0}, {"r": 0, "c": "파트너스대구경북센터", "b": "구미(고애경)", "id": "308087922", "n": "박경자", "s": 31130, "a": 0}, {"r": 0, "c": "파트너스대구경북센터", "b": "구미(이길남)", "id": "318007442", "n": "한희숙", "s": 33600, "a": 0}, {"r": 0, "c": "파트너스대구경북센터", "b": "대구(서해숙)", "id": "308050034", "n": "정남숙", "s": 20000, "a": 0}, {"r": 0, "c": "파트너스대구경북센터", "b": "대구(송혜영)", "id": "309037637", "n": "권광대", "s": 33870, "a": 0}, {"r": 0, "c": "파트너스호남센터", "b": "군산(강초화)", "id": "319007690", "n": "김은실", "s": 30170, "a": 0}, {"r": 0, "c": "파트너스호남센터", "b": "군산(강초화)", "id": "325009155", "n": "김현진", "s": 19540, "a": 0}, {"r": 0, "c": "파트너스호남센터", "b": "전주(박현옥)", "id": "321014341", "n": "나구미", "s": 14570, "a": 0}]}, "pa": {"tot": {"s": 3260280, "a": 2290000}, "rows": [{"r": 26, "c": "파트너스경인센터", "b": "안양(남영숙)", "id": "326020906", "n": "전호정", "s": 68830, "a": 30000}, {"r": 25, "c": "파트너스서울센터", "b": "신도림(송지연)", "id": "326019691", "n": "김정하", "s": 50610, "a": 30000}, {"r": 24, "c": "파트너스강남센터", "b": "삼성(윤지현)", "id": "326020780", "n": "유은경", "s": 200000, "a": 200000}, {"r": 23, "c": "파트너스경인센터", "b": "부천(문연화)", "id": "326020260", "n": "이헌희", "s": 55020, "a": 30000}, {"r": 22, "c": "파트너스호남센터", "b": "군산(강초화)", "id": "326008038", "n": "장운철", "s": 62340, "a": 30000}, {"r": 21, "c": "파트너스서울센터", "b": "서울역(성봉현)", "id": "326019820", "n": "김희업", "s": 58400, "a": 30000}, {"r": 20, "c": "파트너스대구경북센터", "b": "경주(황영미)", "id": "325018477", "n": "김애화", "s": 112100, "a": 100000}, {"r": 19, "c": "파트너스부산경남센터", "b": "부산(하미정)", "id": "326018074", "n": "장혜영", "s": 70080, "a": 30000}, {"r": 18, "c": "파트너스호남센터", "b": "광주(박민희)", "id": "326008029", "n": "손은경", "s": 51450, "a": 30000}, {"r": 17, "c": "파트너스부산경남센터", "b": "부산(하미정)", "id": "326001855", "n": "이수원", "s": 75710, "a": 30000}, {"r": 16, "c": "파트너스경인센터", "b": "부천(이주아)", "id": "326015916", "n": "이승엽", "s": 146800, "a": 100000}, {"r": 15, "c": "파트너스부산경남센터", "b": "부산(김권하)", "id": "326019905", "n": "이양열", "s": 53850, "a": 30000}, {"r": 14, "c": "파트너스대구경북센터", "b": "대구(이효연)", "id": "326018941", "n": "노아람", "s": 157090, "a": 200000}, {"r": 13, "c": "파트너스서울센터", "b": "서울역(권윤정)", "id": "326011967", "n": "홍성남", "s": 100570, "a": 100000}, {"r": 12, "c": "파트너스경인센터", "b": "부천(정혜란)", "id": "326018660", "n": "문주영", "s": 101940, "a": 100000}, {"r": 11, "c": "파트너스서울센터", "b": "서울역(손다혜)", "id": "326016408", "n": "이미숙", "s": 106580, "a": 100000}, {"r": 10, "c": "파트너스대구경북센터", "b": "대구(서해숙)", "id": "325001722", "n": "이나경", "s": 200000, "a": 200000}, {"r": 9, "c": "파트너스경인센터", "b": "부천(윤현미)", "id": "325010792", "n": "최유옥", "s": 50450, "a": 30000}, {"r": 8, "c": "파트너스대구경북센터", "b": "대구(백윤정)", "id": "324009738", "n": "이상인", "s": 56880, "a": 30000}, {"r": 7, "c": "파트너스호남센터", "b": "광주(홍윤진)", "id": "326001241", "n": "김대건", "s": 72310, "a": 30000}, {"r": 6, "c": "파트너스충청센터", "b": "대전(민홍준)", "id": "326006573", "n": "함정완", "s": 70020, "a": 30000}, {"r": 5, "c": "파트너스대구경북센터", "b": "대구(이효연)", "id": "326017531", "n": "송숙헌", "s": 150500, "a": 200000}, {"r": 4, "c": "파트너스호남센터", "b": "군산(강초화)", "id": "325019848", "n": "김정남", "s": 104310, "a": 100000}, {"r": 3, "c": "파트너스충청센터", "b": "천안(김진석)", "id": "324006444", "n": "김영백", "s": 220000, "a": 200000}, {"r": 2, "c": "파트너스서울센터", "b": "서울역(권윤정)", "id": "326002752", "n": "윤동기", "s": 108240, "a": 100000}, {"r": 1, "c": "파트너스대구경북센터", "b": "포항(김은정)", "id": "324013013", "n": "원춘미", "s": 195890, "a": 200000}, {"r": 0, "c": "파트너스강남센터", "b": "삼성(문혜진)", "id": "326020072", "n": "이태국", "s": 25270, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "서울역(권윤정)", "id": "326016882", "n": "한태훈", "s": 17710, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "서울역(금진서)", "id": "325017135", "n": "최재훈", "s": 28770, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "서울역(금진서)", "id": "325018257", "n": "육민환", "s": 31970, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "서울역(금진서)", "id": "326021181", "n": "주소연", "s": 19790, "a": 0}, {"r": 0, "c": "파트너스서울센터", "b": "서울역(이동수)", "id": "326002613", "n": "이환철", "s": 31560, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "부천(김기현)", "id": "325022848", "n": "손인태", "s": 17910, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "부천(윤현미)", "id": "326015869", "n": "김용지", "s": 14140, "a": 0}, {"r": 0, "c": "파트너스경인센터", "b": "평촌(문경숙)", "id": "326016556", "n": "지현정", "s": 0, "a": 0}, {"r": 0, "c": "파트너스충청센터", "b": "대전(성상훈)", "id": "326021446", "n": "홍금표", "s": 22890, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(박광시)", "id": "326020283", "n": "원덕경", "s": 28300, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(양인정)", "id": "325008138", "n": "CUI ZHENYU", "s": 33310, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(이주임)", "id": "326015398", "n": "이은혜", "s": 48080, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(하미정)", "id": "324016716", "n": "이상희", "s": 28480, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(하미정)", "id": "326019510", "n": "안상화", "s": 43970, "a": 0}, {"r": 0, "c": "파트너스부산경남센터", "b": "부산(현유라)", "id": "326021399", "n": "임성훈", "s": 38420, "a": 0}, {"r": 0, "c": "파트너스대구경북센터", "b": "경주(황영미)", "id": "326011873", "n": "김상호", "s": 25000, "a": 0}, {"r": 0, "c": "파트너스대구경북센터", "b": "대구(백윤정)", "id": "326021619", "n": "김치호", "s": 25990, "a": 0}, {"r": 0, "c": "파트너스대구경북센터", "b": "대구(정진희)", "id": "326019988", "n": "이순림", "s": 10000, "a": 0}, {"r": 0, "c": "파트너스호남센터", "b": "광주(박문옥)", "id": "326018271", "n": "정유채", "s": 36870, "a": 0}, {"r": 0, "c": "파트너스호남센터", "b": "광주(주현아)", "id": "325007188", "n": "GAO LIANJI", "s": 31880, "a": 0}]}}</script>
+<script>
+'use strict';
+var EMB=JSON.parse(document.getElementById('raw').textContent),DATA=EMB,LS='sim2610:';
+function lget(k){try{return JSON.parse(localStorage.getItem(LS+k))}catch(e){return null}}
+function lset(k,v){try{localStorage.setItem(LS+k,JSON.stringify(v))}catch(e){}}
+(function(){var d=lget('data');if(d&&d.ts>EMB.ts)DATA=d})();
+
+/* ---------- 시책 기준 (261001 파트너스본부 지점장시책) ---------- */
+var ROOKIE=[['5영업일까지',15],['7영업일까지',12],['9영업일까지',9],['9영업일 초과',7]];
+var ACTIVE=[[3,21],[5,40],[7,63],[9,90],[12,132],[15,180],[18,234],[21,294],[25,375]],ACT_PER=15;
+var CHANCE=[[1,10],[2,20],[3,30],[5,50],[7,70],[9,90],[12,120],[15,150]],CHA_PER=10;
+var PA1=[[100,10],[125,25],[150,45],[175,87.5],[200,120],[225,157.5],[250,180],[275,203.5],[300,228],[325,253.5],[350,280],[375,307.5],[400,336],[425,365.5],[450,396],[475,427.5],[500,460],[525,493.5],[550,528],[575,563.5],[600,600]],PA1R=1;
+var PA2=[[150,45],[175,61.25],[200,80],[225,101.25],[250,125],[275,151.25],[300,180],[325,211.25],[350,245],[375,281.25],[400,320],[425,361.25],[450,405],[475,451.25],[500,500],[525,551.25],[550,605],[575,661.25],[600,720]],PA2R=1.2;
+var CX1=[[150,15],[175,21],[200,28],[225,36],[250,45],[275,55],[300,66],[325,78],[350,91],[375,105],[400,120],[425,136],[450,153],[475,171],[500,190],[525,210],[550,231],[575,253],[600,270]],CX1R=.45;
+var CX2=[[250,25],[275,33],[300,42],[325,52],[350,63],[375,75],[400,88],[425,102],[450,117],[475,133],[500,150],[525,168],[550,187],[575,207],[600,240]],CX2R=.4;
+var SPOT=[[5,3],[10,10],[15,20]];
+var STRAT=[[10,5],[20,10],[30,15],[40,20],[50,25]];
+var DB=[[1,.3],[3,.5],[5,.7]];
+
+function step(t,v){var r=0;for(var i=0;i<t.length;i++)if(v>=t[i][0])r=t[i][1];return r}
+function next(t,v){for(var i=0;i<t.length;i++)if(v<t[i][0])return t[i];return null}
+function perf(t,rate,v){return v>600?v*rate:step(t,v)}           // 만원
+function head(t,per,n){var m=t[t.length-1][0];return n>m?n*per:step(t,n)}
+function W(m){return Math.round(m*10000).toLocaleString('ko-KR')+'원'}
+function M(m){return (Math.round(m*100)/100).toLocaleString('ko-KR')+'만'}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function sv(x){x=+x||0;return x<1000?x:x/1e4}
+function mw(x){x=+x||0;return x>=10000?x/1e4:x}
+function $(i){return document.getElementById(i)}
+
+/* ---------- 상태 ---------- */
+var cen,br,S;
+function blank(){return{rk:[0,0,0,0],ac:0,ch:0,pa:0,cut:[0,0,0],dbn:0,dbs:0,cx:0,cxcut:0,st:0,ov:{pa:{},cx:{}},add:{pa:[],cx:[]}}}
+function load(){var b=blank(),s=lget('in:'+br)||{};for(var k in b)if(s[k]!=null)b[k]=s[k];S=b}
+function save(){lset('in:'+br,S)}
+function branches(){var m={};['pa','cx'].forEach(function(k){DATA[k].rows.forEach(function(r){(m[r.c]=m[r.c]||{})[r.b]=1})});return m}
+
+function initPick(){
+  var m=branches(),cs=Object.keys(m).sort();
+  var pc=lget('cen'),pb=lget('br');
+  cen=cs.indexOf(pc)>=0?pc:(cs.filter(function(c){return c.indexOf('강남')>=0})[0]||cs[0]);
+  $('cen').innerHTML=cs.map(function(c){return'<option'+(c==cen?' selected':'')+'>'+esc(c)+'</option>'}).join('');
+  fillBr(pb);
+  $('asof').textContent=DATA.asof+' 기준 · raw 자동 반영 + 수기 입력 시뮬레이션';
+}
+function fillBr(pref){
+  var bs=Object.keys(branches()[cen]||{}).sort();bs.push('직접 입력(명단에 없음)');
+  br=bs.indexOf(pref)>=0?pref:bs[0];
+  $('br').innerHTML=bs.map(function(b){return'<option'+(b==br?' selected':'')+'>'+esc(b)+'</option>'}).join('');
+  lset('cen',cen);lset('br',br);load();render();
+}
+$('cen').onchange=function(){cen=this.value;fillBr()};
+$('br').onchange=function(){br=this.value;lset('br',br);load();render()};
+
+/* ---------- 화면 ---------- */
+function num(id,label,val,stepv){return'<label class="f"><span>'+label+'</span><input type="number" inputmode="decimal" min="0" step="'+(stepv||1)+'" data-k="'+id+'" value="'+(val||'')+'" placeholder="0"></label>'}
+function spotRows(k){
+  var rows=DATA[k].rows.filter(function(r){return r.b==br}).map(function(r){return{id:r.id,n:r.n,s:r.s/1e4,a:r.a/1e4,rk:r.r}});
+  S.add[k].forEach(function(a,i){rows.push({id:'+'+i,n:a.n,s:0,a:0,man:1,i:i})});
+  rows.forEach(function(r){var o=r.man?S.add[k][r.i].v:S.ov[k][r.id];r.ed=r.man||(o!=null&&o!=='');r.v=r.ed?sv(o):r.s;r.aw=r.ed?step(SPOT,r.v):r.a});
+  return rows.sort(function(x,y){return(x.man?1:0)-(y.man?1:0)||y.v-x.v});
+}
+function spotHtml(k,title,who){
+  var rows=spotRows(k),t=DATA[k].tot,left=Math.max(0,1000-t.a/1e4);
+  var h='<h3>'+title+' <small>· '+who+'별 평가 · 전사 한도 잔여 '+M(left)+' / 1,000만</small></h3><div class="tw"><table><tr><th>'+who+'</th><th>raw 실적</th><th>예상 실적(원)</th><th>시책금</th><th>다음 구간</th></tr>';
+  if(!rows.length)h+='<tr><td colspan="5" style="text-align:center;color:var(--sub)">raw 실적 없음 — 아래에서 추가해 입력하세요</td></tr>';
+  rows.forEach(function(r){
+    h+='<tr data-row="'+k+'|'+r.id+'"'+(r.ed?' class="edit"':'')+'><td>'+(r.man?'<input type="text" data-sn="'+k+'|'+r.i+'" value="'+esc(r.n)+'" placeholder="이름">':esc(r.n)+(r.rk?' <span class="tag auto">'+r.rk+'번</span>':''))+'</td><td>'+(r.man?'-':M(r.s))+'</td><td><input type="number" inputmode="decimal" min="0" step="10000" data-sv="'+k+'|'+r.id+'" value="'+(r.ed?Math.round(r.v*1e4):'')+'" placeholder="'+(r.man?0:Math.round(r.s*1e4))+'"></td><td class="aw"></td><td class="nx"></td></tr>'});
+  h+='</table></div><div class="btns"><button class="s" data-add="'+k+'">+ '+who+' 추가</button></div><div class="res"><span>'+title+' 시책금</span><b id="o_sp'+k+'"></b></div>';
+  return h;
+}
+function render(){
+  var h='';
+  h+='<div class="card sum"><small>'+esc(br)+' · 10월 예상 시책금</small><div class="big" id="o_tot"></div><div class="row"><span id="o_now"></span><span id="o_2y"></span><span id="o_ctr"></span></div></div>';
+  h+='<div class="card"><h2>1주차 스팟 · 1천만원 도전 <span class="tag auto">raw 자동</span><span class="tag">수기 수정</span></h2><p class="desc">10.1(목)~10.5(월) 입력일 · 실적 5만/10만/15만 → 3만/10만/20만 · 선착순 한도 소진 시 종료 · 센터 판촉비 지급</p>'+spotHtml('pa','파트너스 실적','파트너스')+spotHtml('cx','교차 실적','FP')+'</div>';
+  h+='<div class="card"><h2>파트너스 3종 시책 <span class="tag">수기 입력</span></h2><p class="desc">Rookie는 실적 시점별 인당 지급, Active·Chance는 인원 구간. 최고 구간 초과 시 인당 금액 × 인원</p><h3>Rookie <small>· 응시 후 영업일 구간별 인원</small></h3><div class="grid g4">'+ROOKIE.map(function(r,i){return num('rk'+i,r[0]+' ('+r[1]+'만)',S.rk[i])}).join('')+'</div><div class="grid g2" style="margin-top:8px">'+num('ac','Active 인원',S.ac)+num('ch','Chance 인원',S.ch)+'</div><div id="o_3h"></div><div class="res"><span>3종 합계</span><b id="o_3"></b></div></div>';
+  h+='<div class="card"><h2>파트너스 성과 인센티브 Ⅰ·Ⅱ <span class="tag">수기 입력</span></h2><p class="desc">10.1~10.31 파트너스 전체 실적(증권당 최대 20만, 실손 제외). 만원 단위 입력(원 단위로 넣어도 자동 환산). Ⅰ 초회 지급 + Ⅱ 2차년도 지급</p>'+num('pa','10월 파트너스 매출 (만원)',S.pa,10)+'<div id="o_pah"></div><div class="res"><span>Ⅰ 초회 + Ⅱ 2차년도</span><b id="o_pa"></b></div></div>';
+  h+='<div class="card"><h2>컷오프 <span class="tag">수기 체크</span></h2><p class="desc">미달 항목마다 3종 + 성과 인센티브에 90% 적용</p>'+['KMV율 2,500% 미만','2~4회차 수금율 93% 미만','당월 위촉율 85% 미만 (6개월 합산 85% 이상이면 제외)'].map(function(t,i){return'<label class="chk"><input type="checkbox" data-c="'+i+'"'+(S.cut[i]?' checked':'')+'>'+t+'</label>'}).join('')+'<div id="o_cut" class="warn"></div></div>';
+  h+='<div class="card"><h2>3차 배당 활동 우수 <span class="tag">수기 입력</span></h2><p class="desc">10.1~10.25 · 유실적 1/3/5명 이상 → 이관 DB 매출 × 30/50/70% · 센터 판촉비 지급</p><div class="grid g2">'+num('dbn','유실적 인원 (N잡 기준)',S.dbn)+num('dbs','이관 DB 매출 (만원)',S.dbs,10)+'</div><div class="res"><span id="o_dbr"></span><b id="o_db"></b></div></div>';
+  h+='<div class="card"><h2>교차 지점장 시책 <span class="tag">수기 입력</span></h2><p class="desc">교차 경영목표 부여 지점장만 해당. 성과 인센티브 Ⅰ·Ⅱ + 전략상품(10.1~10.11, 익월 50% + 2차년도 50%)</p><div class="grid g2">'+num('cx','10월 교차 매출 (만원)',S.cx,10)+num('st','1주차 전략상품 실적 (만원)',S.st,10)+'</div><label class="chk" style="margin-top:8px"><input type="checkbox" data-cx="1"'+(S.cxcut?' checked':'')+'>교차 컷오프 해당 (합산 KMV 2,200% 미만 또는 실손제외 KMV 2,500% 미만) → 부지급으로 계산</label><div id="o_cxh"></div><div class="res"><span>교차 합계</span><b id="o_cx"></b></div></div>';
+  h+='<div class="card"><h2>지급 내역</h2><table class="brk" id="o_brk"></table><p class="desc" style="margin:10px 0 0">예상 금액이며 실제 지급은 본부 확정 기준을 따릅니다.</p></div>';
+  $('app').innerHTML=h;calc();
+}
+
+function calc(){
+  // 스팟
+  var sp={};['pa','cx'].forEach(function(k){var t=0;spotRows(k).forEach(function(r){t+=r.aw;var tr=document.querySelector('tr[data-row="'+k+'|'+r.id+'"]');if(!tr)return;tr.className=r.ed?'edit':'';tr.querySelector('.aw').textContent=r.aw?M(r.aw):'-';var n=next(SPOT,r.v);tr.querySelector('.nx').textContent=n?'+'+M(n[0]-r.v)+' → '+M(n[1]):'최고';});sp[k]=t;$('o_sp'+k).textContent=W(t)});
+  // 3종
+  var rk=0;S.rk.forEach(function(n,i){rk+=(+n||0)*ROOKIE[i][1]});
+  var ac=head(ACTIVE,ACT_PER,+S.ac||0),ch=head(CHANCE,CHA_PER,+S.ch||0),three=rk+ac+ch,hh=[];
+  var na=next(ACTIVE,+S.ac||0),nc=next(CHANCE,+S.ch||0);
+  if(na)hh.push('Active '+(na[0]-(+S.ac||0))+'명 더 → '+M(na[1]));
+  if(nc)hh.push('Chance '+(nc[0]-(+S.ch||0))+'명 더 → '+M(nc[1]));
+  $('o_3h').innerHTML='<div class="desc" style="margin:8px 0 0">Rookie '+M(rk)+' · Active '+M(ac)+' · Chance '+M(ch)+'</div>'+(hh.length?'<div class="hint">'+hh.join(' / ')+'</div>':'');
+  $('o_3').textContent=W(three);
+  // 성과 PA
+  var v=mw(S.pa),p1=perf(PA1,PA1R,v),p2=perf(PA2,PA2R,v),n1=v>=600?null:next(PA1,v);
+  $('o_pah').innerHTML='<div class="desc" style="margin:8px 0 0">Ⅰ '+M(p1)+' · Ⅱ '+M(p2)+'</div>'+(n1?'<div class="hint">'+M(n1[0]-v)+' 더 하면 → Ⅰ '+M(n1[1])+' · Ⅱ '+M(perf(PA2,PA2R,n1[0]))+'</div>':'<div class="hint">600만 이상: Ⅰ 매출×100% · Ⅱ 매출×120%</div>');
+  $('o_pa').textContent=W(p1+p2);
+  // 컷오프
+  var k=S.cut.filter(Boolean).length,f=Math.pow(.9,k);
+  $('o_cut').textContent=k?k+'개 항목 미달 → '+Math.round(f*1000)/10+'% 적용 (−'+W((three+p1+p2)*(1-f))+')':'';
+  var now=(three+p1)*f,y2=p2*f,mv=0;
+  if(v>0&&now>v*3){mv=now-v*3;now-=mv;y2+=mv}
+  // 3차 배당
+  var rt=step(DB,+S.dbn||0),db=mw(S.dbs)*rt;
+  $('o_dbr').textContent='지급율 '+Math.round(rt*100)+'%';$('o_db').textContent=W(db);
+  // 교차
+  var c=mw(S.cx),c1=S.cxcut?0:perf(CX1,CX1R,c),c2=S.cxcut?0:perf(CX2,CX2R,c),st=S.cxcut?0:step(STRAT,mw(S.st)),nx=c>=600?null:next(CX1,c);
+  $('o_cxh').innerHTML='<div class="desc" style="margin:8px 0 0">성과 Ⅰ '+M(c1)+' · Ⅱ '+M(c2)+' · 전략상품 익월 '+M(st)+' + 2차년도 '+M(st)+'</div>'+(nx&&!S.cxcut?'<div class="hint">교차 매출 '+M(nx[0]-c)+' 더 하면 → Ⅰ '+M(nx[1])+' · Ⅱ '+M(perf(CX2,CX2R,nx[0]))+'</div>':'');
+  $('o_cx').textContent=W(c1+c2+st*2);
+  // 합계
+  var ctr=sp.pa+sp.cx+db,nowT=now+c1+st,y2T=y2+c2+st,tot=nowT+y2T+ctr;
+  $('o_tot').textContent=W(tot);$('o_now').textContent='초회·익월 '+M(nowT);$('o_2y').textContent='2차년도 '+M(y2T);$('o_ctr').textContent='센터 판촉비 '+M(ctr);
+  var L=[['1주차 스팟 · 파트너스',sp.pa,'판촉비'],['1주차 스팟 · 교차',sp.cx,'판촉비'],['Rookie',rk*f,'초회'],['Active',ac*f,'초회'],['Chance',ch*f,'초회'],['파트너스 성과 인센티브 Ⅰ',p1*f,'초회'],['파트너스 성과 인센티브 Ⅱ',p2*f,'2차년도'],['3차 배당 활동 우수',db,'판촉비'],['교차 성과 인센티브 Ⅰ',c1,'초회'],['교차 성과 인센티브 Ⅱ',c2,'2차년도'],['교차 전략상품 (익월)',st,'익월'],['교차 전략상품 (2차년도)',st,'2차년도']];
+  $('o_brk').innerHTML=L.filter(function(x){return x[1]>0}).map(function(x){return'<tr><td>'+x[0]+' <span class="tag">'+x[2]+'</span></td><td>'+W(x[1])+'</td></tr>'}).join('')+(mv?'<tr><td colspan="2" class="warn" style="text-align:left">1,200% Rule: 1차년 시책금이 매출의 300%를 넘어 '+W(mv)+'은 2차년도 지급으로 이월</td></tr>':'')+'<tr class="t"><td>합계'+(k?' (컷오프 '+Math.round(f*1000)/10+'% 반영)':'')+'</td><td>'+W(tot)+'</td></tr>';
+}
+
+$('app').addEventListener('input',function(e){
+  var t=e.target,d=t.dataset;
+  if(d.k){var m=d.k.match(/^rk(\d)$/);if(m)S.rk[+m[1]]=+t.value||0;else S[d.k]=+t.value||0}
+  else if(d.c!=null)S.cut[+d.c]=t.checked?1:0;
+  else if(d.cx)S.cxcut=t.checked?1:0;
+  else if(d.sv){var p=d.sv.split('|');if(p[1].charAt(0)=='+')S.add[p[0]][+p[1].slice(1)].v=t.value;else if(t.value==='')delete S.ov[p[0]][p[1]];else S.ov[p[0]][p[1]]=t.value}
+  else if(d.sn){var q=d.sn.split('|');S.add[q[0]][+q[1]].n=t.value}
+  else return;
+  save();calc();
+});
+$('app').addEventListener('click',function(e){var k=e.target.dataset.add;if(!k)return;S.add[k].push({n:'',v:''});save();render()});
+$('rst').onclick=function(){if(!confirm(br+' 입력값을 모두 지울까요?'))return;S=blank();save();render()};
+
+/* ---------- raw 업로드 ---------- */
+function decode(buf){var u=new Uint8Array(buf);if(u[0]==0xFF&&u[1]==0xFE)return new TextDecoder('utf-16le').decode(buf);if(u[0]==0xFE&&u[1]==0xFF)return new TextDecoder('utf-16be').decode(buf);var t=new TextDecoder('utf-8').decode(buf);if(t.indexOf('�')>=0){try{t=new TextDecoder('euc-kr').decode(buf)}catch(e){}}return t.replace(/^﻿/,'')}
+function cells(line,sep){if(sep=='\t')return line.split('\t');var o=[],c='',q=0;for(var i=0;i<line.length;i++){var ch=line[i];if(ch=='"')q=!q;else if(ch==','&&!q){o.push(c);c=''}else c+=ch}o.push(c);return o}
+function n(s){return +String(s||'').replace(/[^0-9.\-]/g,'')||0}
+function parse(text){
+  var ls=text.split(/\r?\n/).filter(function(l){return l.trim()}),sep=ls[0].indexOf('\t')>=0?'\t':',',H=cells(ls[0],sep).map(function(s){return s.trim()});
+  function ix(w){for(var i=0;i<H.length;i++)if(H[i].indexOf(w)>=0)return i;return-1}
+  var kind=H.join('').indexOf('파트너스시책')>=0?'pa':H.join('').indexOf('교차시책')>=0?'cx':null;
+  var iR=ix('선착순'),iC=ix('지점조직명'),iB=ix('지점직속팀명'),iI=ix('영업가족조직코드'),iN=ix('영업가족명'),iS=ix('시책인정매출'),iA=ix('시책금');
+  if(!kind||iB<0||iS<0||iA<0)return null;
+  var out={tot:{s:0,a:0},rows:[]};
+  ls.slice(1).forEach(function(l){var c=cells(l,sep);if(/총합계|총계/.test(c[iR]+c[iC])){out.tot={s:n(c[iS]),a:n(c[iA])};return}
+    out.rows.push({r:n(c[iR])||0,c:(c[iC]||'').trim(),b:(c[iB]||'').trim(),id:(c[iI]||'').trim(),n:(c[iN]||'').trim(),s:n(c[iS]),a:n(c[iA])})});
+  if(!out.tot.a)out.rows.forEach(function(r){out.tot.s+=r.s;out.tot.a+=r.a});
+  return{kind:kind,data:out};
+}
+$('fi').onchange=function(){
+  var fs=[].slice.call(this.files),msg=[],nd=JSON.parse(JSON.stringify(DATA)),left=fs.length;
+  fs.forEach(function(f){var rd=new FileReader();rd.onload=function(){
+    var r=null;try{r=parse(decode(rd.result))}catch(e){}
+    if(r){nd[r.kind]=r.data;msg.push('✓ '+f.name+' → '+(r.kind=='pa'?'파트너스':'교차')+' 선착순 '+r.data.rows.length+'명')}else msg.push('✗ '+f.name+' → 인식하지 못한 형식 (건너뜀)');
+    if(--left==0){var d=new Date();nd.ts=d.getTime();nd.asof=d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);DATA=nd;lset('data',DATA);$('st').textContent=msg.join('\n');initPick()}
+  };rd.readAsArrayBuffer(f)});
+};
+$('exp').onclick=function(){
+  var doc=document.documentElement.cloneNode(true);
+  doc.querySelector('#raw').textContent=JSON.stringify(DATA).replace(/</g,'\\u003c');
+  doc.querySelector('#app').innerHTML='';doc.querySelector('#st').textContent='';doc.querySelector('#cen').innerHTML='';doc.querySelector('#br').innerHTML='';
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['<!doctype html>\n'+doc.outerHTML],{type:'text/html'}));
+  var d=new Date();a.download='지점장시책_시뮬레이터_'+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'.html';a.click();
+};
+initPick();
+</script>
+</body>
+</html>
