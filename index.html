@@ -20,6 +20,7 @@ main{max-width:760px;margin:0 auto;padding:12px 12px 60px}
 .pick{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
 select,input[type=number],input[type=text]{width:100%;font:inherit;padding:9px 10px;border:1px solid #cfc9c9;border-radius:8px;background:#fff;color:var(--ink)}
 input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
+input.raw{background:#e6f4ec;color:var(--ok);font-weight:600}
 input:focus,select:focus{outline:2px solid var(--red2);outline-offset:1px}
 label.f{display:block;font-size:12.5px;color:var(--sub)}
 label.f span{display:block;margin-bottom:3px}
@@ -57,7 +58,7 @@ details summary{cursor:pointer;font-weight:700}
 </style>
 </head>
 <body>
-<header><h1>10월 지점장 시책 시뮬레이터 <span style="font-size:11px;opacity:.7">v2.2</span></h1><p id="asof"></p></header>
+<header><h1>10월 지점장 시책 시뮬레이터 <span style="font-size:11px;opacity:.7">v2.3</span></h1><p id="asof"></p></header>
 <main>
 <div class="card"><div class="pick">
 <label class="f"><span>센터</span><select id="cen"></select></label>
@@ -137,7 +138,7 @@ $('cen').onchange=function(){cen=this.value;fillBr()};
 $('br').onchange=function(){br=this.value;lset('br',br);load();render()};
 
 /* ---------- 화면 ---------- */
-function num(id,label,val,stepv,ph){return'<label class="f"><span>'+label+'</span><input type="number" inputmode="decimal" min="0" step="'+(stepv||1)+'" data-k="'+id+'" value="'+(has(val)?val:'')+'" placeholder="'+(ph||0)+'"></label>'}
+function num(id,label,val,stepv,ph){var raw=!has(val)&&ph;return'<label class="f"><span>'+label+(raw?' <span class="tag auto">raw</span>':'')+'</span><input type="number" inputmode="decimal" min="0" step="'+(stepv||1)+'"'+(raw?' class="raw"':'')+' data-k="'+id+'" value="'+(has(val)?val:(raw?ph:''))+'" placeholder="0"></label>'}
 function spotRows(k){
   var rows=DATA[k].rows.filter(function(r){return r.c==cen&&pn(r.b)==pn(br)}).map(function(r){return{id:r.id,n:r.n,s:r.s/1e4,a:r.a/1e4,rk:r.r}});
   S.add[k].forEach(function(a,i){rows.push({id:'+'+i,n:a.n,s:0,a:0,man:1,i:i})});
@@ -220,7 +221,7 @@ function calc(){
 
 $('app').addEventListener('input',function(e){
   var t=e.target,d=t.dataset;
-  if(d.k){var m=d.k.match(/^rk(\d)$/);if(m)S.rk[+m[1]]=t.value;else S[d.k]=t.value}
+  if(d.k){t.classList.remove('raw');var m=d.k.match(/^rk(\d)$/);if(m)S.rk[+m[1]]=t.value;else S[d.k]=t.value}
   else if(d.c!=null)S.cut[+d.c]=t.checked?1:0;
   else if(d.cx)S.cxcut=t.checked?1:0;
   else if(d.sv){var p=d.sv.split('|');if(p[1].charAt(0)=='+')S.add[p[0]][+p[1].slice(1)].v=t.value;else if(t.value==='')delete S.ov[p[0]][p[1]];else S.ov[p[0]][p[1]]=t.value}
