@@ -58,7 +58,7 @@ details summary{cursor:pointer;font-weight:700}
 </style>
 </head>
 <body>
-<header><h1>10월 지점장 시책 시뮬레이터 <span style="font-size:11px;opacity:.7">v2.5</span></h1><p id="asof"></p></header>
+<header><h1>10월 지점장 시책 시뮬레이터 <span style="font-size:11px;opacity:.7">v2.6</span></h1><p id="asof"></p></header>
 <main>
 <div class="card"><div class="pick">
 <label class="f"><span>센터</span><select id="cen"></select></label>
@@ -176,9 +176,9 @@ function render(){
   A={rk:au('rk'),ac:au('ac'),ch:au('ch'),pa:au('pa'),cx:au('cx')};
   h+='<div class="card sum"><small>'+esc(br)+' · 10월 예상 시책금</small><div class="big" id="o_tot"></div><div class="row"><span id="o_now"></span><span id="o_2y"></span><span id="o_ctr"></span></div></div>';
   h+='<div class="card"><h2>파트너스 3종 시책 '+(A.rk||A.ac||A.ch?T:'')+'<span class="tag">수기 입력</span></h2><p class="desc">Rookie는 실적 시점별 인당 지급, Active·Chance는 인원 구간. 최고 구간 초과 시 인당 금액 × 인원</p><h3>Rookie '+(A.rk&&A.rk.d?T:'')+' <small>· 응시 후 영업일 구간별 인원</small></h3><div class="grid g4">'+ROOKIE.map(function(r,i){return num('rk'+i,r[0]+' ('+r[1]+'만)',S.rk[i],1,A.rk&&A.rk.d?A.rk.d[i]:0,!!(A.rk&&A.rk.d))}).join('')+'</div><div class="grid g2" style="margin-top:8px">'+num('ac','Active 인원',S.ac,1,A.ac&&A.ac.n)+num('ch','Chance 인원',S.ch,1,A.ch&&A.ch.n)+'</div><div id="o_3h"></div><div class="desc" style="margin:6px 0 0;font-size:11.5px">불러온 raw: '+(Object.keys(DATA.auto).length?Object.keys(DATA.auto).map(function(k){return KN[k]+' '+DATA.auto[k].length+'행'}).join(' · '):'없음')+' ('+DATA.asof+')</div><div class="res"><span>3종 합계</span><b id="o_3"></b></div></div>';
-  h+='<div class="card"><h2>파트너스 성과 인센티브 Ⅰ·Ⅱ '+(A.pa?T:'')+'<span class="tag">수기 입력</span></h2><p class="desc">10.1~10.31 파트너스 전체 실적(증권당 최대 20만, 실손 제외). 만원 단위 입력(원 단위로 넣어도 자동 환산). Ⅰ 초회 지급 + Ⅱ 2차년도 지급</p>'+num('pa','10월 파트너스 매출 (만원)',S.pa,10,A.pa&&r2(A.pa.s))+'<div id="o_pah"></div><div class="res"><span>Ⅰ 초회 + Ⅱ 2차년도</span><b id="o_pa"></b></div></div>';
+  h+='<div class="card"><h2>파트너스 성과 인센티브 Ⅰ·Ⅱ '+(A.pa?T:'')+'<span class="tag">수기 입력</span></h2><p class="desc">10.1~10.31 파트너스 전체 실적(증권당 최대 20만, 실손 제외). 원 단위 입력(만원 단위로 넣어도 자동 환산). Ⅰ 초회 지급 + Ⅱ 2차년도 지급</p>'+num('pa','10월 파트너스 매출 (원)',S.pa,10000,A.pa&&Math.round(A.pa.s))+'<div id="o_pah"></div><div class="res"><span>Ⅰ 초회 + Ⅱ 2차년도</span><b id="o_pa"></b></div></div>';
   h+='<div class="card"><h2>컷오프 <span class="tag">수기 체크</span></h2><p class="desc">미달 항목마다 3종 + 성과 인센티브에 90% 적용</p>'+['KMV율 2,500% 미만','2~4회차 수금율 93% 미만','당월 위촉율 85% 미만 (6개월 합산 85% 이상이면 제외)'].map(function(t,i){return'<label class="chk"><input type="checkbox" data-c="'+i+'"'+(S.cut[i]?' checked':'')+'>'+t+'</label>'}).join('')+'<div id="o_cut" class="warn"></div></div>';
-  h+='<div class="card"><h2>교차 지점장 시책 '+(A.cx?T:'')+'<span class="tag">수기 입력</span></h2><p class="desc">교차 경영목표 부여 지점장만 해당. 성과 인센티브 Ⅰ·Ⅱ + 전략상품(10.1~10.11, 익월 50% + 2차년도 50%)</p><div class="grid g2">'+num('cx','10월 교차 매출 (만원)',S.cx,10,A.cx&&r2(A.cx.s))+num('st','1주차 전략상품 실적 (만원)',S.st,10)+'</div><label class="chk" style="margin-top:8px"><input type="checkbox" data-cx="1"'+(S.cxcut?' checked':'')+'>교차 컷오프 해당 (합산 KMV 2,200% 미만 또는 실손제외 KMV 2,500% 미만) → 부지급으로 계산</label><div id="o_cxh"></div><div class="res"><span>교차 합계</span><b id="o_cx"></b></div></div>';
+  h+='<div class="card"><h2>교차 지점장 시책 '+(A.cx?T:'')+'<span class="tag">수기 입력</span></h2><p class="desc">교차 경영목표 부여 지점장만 해당. 성과 인센티브 Ⅰ·Ⅱ + 전략상품(10.1~10.11, 익월 50% + 2차년도 50%)</p><div class="grid g2">'+num('cx','10월 교차 매출 (원)',S.cx,10000,A.cx&&Math.round(A.cx.s))+num('st','1주차 전략상품 실적 (원)',S.st,10000)+'</div><label class="chk" style="margin-top:8px"><input type="checkbox" data-cx="1"'+(S.cxcut?' checked':'')+'>교차 컷오프 해당 (합산 KMV 2,200% 미만 또는 실손제외 KMV 2,500% 미만) → 부지급으로 계산</label><div id="o_cxh"></div><div class="res"><span>교차 합계</span><b id="o_cx"></b></div></div>';
   h+='<div class="card"><h2>지급 내역</h2><table class="brk" id="o_brk"></table><p class="desc" style="margin:10px 0 0">예상 금액이며 실제 지급은 본부 확정 기준을 따릅니다.</p></div>';
   $('app').innerHTML=h;calc();
 }
