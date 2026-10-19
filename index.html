@@ -174,7 +174,7 @@ function render(){
   var h='',T='<span class="tag auto">raw 자동</span>',r2=function(x){return Math.round(x/100)/100};
   A={rk:au('rk'),ac:au('ac'),ch:au('ch'),pa:au('pa'),cx:au('cx')};
   h+='<div class="card sum"><small>'+esc(br)+' · 10월 예상 시책금</small><div class="big" id="o_tot"></div><div class="row"><span id="o_now"></span><span id="o_2y"></span><span id="o_ctr"></span></div></div>';
-  h+='<div class="card"><h2>파트너스 3종 시책 '+(A.rk||A.ac||A.ch?T:'')+'<span class="tag">수기 입력</span></h2><p class="desc">Rookie는 실적 시점별 인당 지급, Active·Chance는 인원 구간. 최고 구간 초과 시 인당 금액 × 인원</p><h3>Rookie <small>· 응시 후 영업일 구간별 인원</small></h3><div class="grid g4">'+ROOKIE.map(function(r,i){return num('rk'+i,r[0]+' ('+r[1]+'만)',S.rk[i])}).join('')+'</div><div class="grid g2" style="margin-top:8px">'+num('ac','Active 인원',S.ac,1,A.ac&&A.ac.n)+num('ch','Chance 인원',S.ch,1,A.ch&&A.ch.n)+'</div><div id="o_3h"></div><div class="res"><span>3종 합계</span><b id="o_3"></b></div></div>';
+  h+='<div class="card"><h2>파트너스 3종 시책 '+(A.rk||A.ac||A.ch?T:'')+'<span class="tag">수기 입력</span></h2><p class="desc">Rookie는 실적 시점별 인당 지급, Active·Chance는 인원 구간. 최고 구간 초과 시 인당 금액 × 인원</p><h3>Rookie <small>· 응시 후 영업일 구간별 인원</small></h3><div class="grid g4">'+ROOKIE.map(function(r,i){return num('rk'+i,r[0]+' ('+r[1]+'만)',S.rk[i],1,A.rk&&A.rk.d?A.rk.d[i]:0)}).join('')+'</div><div class="grid g2" style="margin-top:8px">'+num('ac','Active 인원',S.ac,1,A.ac&&A.ac.n)+num('ch','Chance 인원',S.ch,1,A.ch&&A.ch.n)+'</div><div id="o_3h"></div><div class="res"><span>3종 합계</span><b id="o_3"></b></div></div>';
   h+='<div class="card"><h2>파트너스 성과 인센티브 Ⅰ·Ⅱ '+(A.pa?T:'')+'<span class="tag">수기 입력</span></h2><p class="desc">10.1~10.31 파트너스 전체 실적(증권당 최대 20만, 실손 제외). 만원 단위 입력(원 단위로 넣어도 자동 환산). Ⅰ 초회 지급 + Ⅱ 2차년도 지급</p>'+num('pa','10월 파트너스 매출 (만원)',S.pa,10,A.pa&&r2(A.pa.s))+'<div id="o_pah"></div><div class="res"><span>Ⅰ 초회 + Ⅱ 2차년도</span><b id="o_pa"></b></div></div>';
   h+='<div class="card"><h2>컷오프 <span class="tag">수기 체크</span></h2><p class="desc">미달 항목마다 3종 + 성과 인센티브에 90% 적용</p>'+['KMV율 2,500% 미만','2~4회차 수금율 93% 미만','당월 위촉율 85% 미만 (6개월 합산 85% 이상이면 제외)'].map(function(t,i){return'<label class="chk"><input type="checkbox" data-c="'+i+'"'+(S.cut[i]?' checked':'')+'>'+t+'</label>'}).join('')+'<div id="o_cut" class="warn"></div></div>';
   h+='<div class="card"><h2>3차 배당 활동 우수 <span class="tag">수기 입력</span></h2><p class="desc">10.1~10.25 · 유실적 1/3/5명 이상 → 이관 DB 매출 × 30/50/70% · 센터 판촉비 지급</p><div class="grid g2">'+num('dbn','유실적 인원 (N잡 기준)',S.dbn)+num('dbs','이관 DB 매출 (만원)',S.dbs,10)+'</div><div class="res"><span id="o_dbr"></span><b id="o_db"></b></div></div>';
@@ -190,7 +190,7 @@ function calc(){
   var acA=!has(S.ac)&&A.ac,chA=!has(S.ch)&&A.ch,acN=acA?A.ac.n:+S.ac||0,chN=chA?A.ch.n:+S.ch||0;
   var ac=acA&&A.ac.ha?A.ac.amt/1e4:head(ACTIVE,ACT_PER,acN),ch=chA&&A.ch.ha?A.ch.amt/1e4:head(CHANCE,CHA_PER,chN),three=rk+ac+ch,hh=[];
   var na=next(ACTIVE,acN),nx2=next(CHANCE,chN),rw=[];
-  if(rkA)rw.push('Rookie '+A.rk.n+'명'+(A.rk.ha?'':' (시책금 열 없음 → 시점별 인원 입력 필요)'));if(acA)rw.push('Active '+acN+'명');if(chA)rw.push('Chance '+chN+'명');
+  if(rkA)rw.push('Rookie '+A.rk.n+'명'+(A.rk.d?' (5일 '+A.rk.d[0]+'·7일 '+A.rk.d[1]+'·9일 '+A.rk.d[2]+'·초과 '+A.rk.d[3]+')':'')+(A.rk.ha?'':' (시책금 열 없음 → 시점별 인원 입력 필요)'));if(acA)rw.push('Active '+acN+'명');if(chA)rw.push('Chance '+chN+'명');
   if(na)hh.push('Active '+(na[0]-acN)+'명 더 → '+M(na[1]));
   if(nx2)hh.push('Chance '+(nx2[0]-chN)+'명 더 → '+M(nx2[1]));
   $('o_3h').innerHTML=(rw.length?'<div class="desc" style="margin:8px 0 0">raw 반영: '+rw.join(' · ')+' — 직접 입력하면 입력값 우선</div>':'')+'<div class="desc" style="margin:8px 0 0">Rookie '+M(rk)+' · Active '+M(ac)+' · Chance '+M(ch)+'</div>'+(hh.length?'<div class="hint">'+hh.join(' / ')+'</div>':'');
@@ -277,7 +277,13 @@ function parse(text,fname){
     var all=fname+' '+H.join(' '),k=KR.rk.test(all)?'rk':KR.ac.test(all)?'ac':KR.ch.test(all)?'ch':/교차/.test(all)?'cx':'pa';
     if(k=='pa'||k=='cx'){var bad=/시책금|시상금|목표|달성|율|초과|코드/,iS=ix(SAL,bad);if(iS<0)iS=ix(SAL2,bad);if(iS<0)return{err:'매출 열을 찾지 못함 (헤더: '+H.slice(0,8).join(', ')+')'};
       res[k]=agg(-1,-1,iS);notes.push(KN[k]+'('+H[iS]+')')}
-    else{var iN=ix(CNT,/코드|영업가족명|지점|센터/),iA=ix(AMT);res[k]=agg(iN,iA,-1);notes.push(KN[k]+'(인원: '+(iN>=0?H[iN]:'행 수')+', 시책금: '+(iA>=0?H[iA]:'없음')+')')}
+    else{var iN=ix(CNT,/코드|영업가족명|지점|센터/),iA=ix(AMT);
+      var RK=[/5일|5영업일/,/7일|7영업일/,/9일|9영업일/,/초과|10일|9일\s*이후/],rc=k=='rk'?RK.map(function(re){return ix(re,/초과/.test(re.source)?null:/초과/)}):[];
+      if(k=='rk'&&rc.some(function(i){return i>=0})){iN=-1;var out=agg(-1,iA,-1),mp={};out.forEach(function(g){mp[g.c+'|'+pn(g.b)]=g;g.d=[0,0,0,0];g.n=0});
+        rows.forEach(function(c){var g=mp[(iC2>=0?nc(c[iC2]):'')+'|'+pn(c[iB2])];if(!g)return;rc.forEach(function(i,j){if(i>=0){var v=n(c[i]);g.d[j]+=v;g.n+=v}})});
+        if(iA<0)out.forEach(function(g){g.amt=0;g.d.forEach(function(v,j){g.amt+=v*ROOKIE[j][1]*1e4});g.ha=1});
+        res.rk=out;notes.push('Rookie(시점별 인원: '+rc.map(function(i){return i>=0?H[i]:'-'}).join('/')+', 시책금: '+(iA>=0?H[iA]:'구간 계산')+')')}
+      else{res[k]=agg(iN,iA,-1);notes.push(KN[k]+'(인원: '+(iN>=0?H[iN]:'행 수')+', 시책금: '+(iA>=0?H[iA]:'없음')+')')}}
   }
   if(!notes.length)return{err:'인원·매출 열을 찾지 못함 (헤더: '+H.slice(0,8).join(', ')+')'};
   return{auto:res,note:notes.join(' · ')+' · 지점장 '+rows.length+'행'};
