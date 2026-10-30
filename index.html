@@ -89,7 +89,7 @@ details summary{cursor:pointer;font-weight:700}
 </style>
 </head>
 <body>
-<header><h1>10월 지점장 시책 시뮬레이터 <span style="font-size:11px;opacity:.7">v3.0</span></h1><p id="asof"></p></header>
+<header><h1>10월 지점장 시책 시뮬레이터 <span style="font-size:11px;opacity:.7">v3.1</span></h1><p id="asof"></p></header>
 <main>
 <div class="card"><div class="pick">
 <label class="f"><span>센터</span><select id="cen"></select></label>
@@ -109,10 +109,14 @@ details summary{cursor:pointer;font-weight:700}
 var EMB=JSON.parse(document.getElementById('raw').textContent),DATA=EMB,LS='sim2610:';
 function lget(k){try{return JSON.parse(localStorage.getItem(LS+k))}catch(e){return null}}
 function lset(k,v){try{localStorage.setItem(LS+k,JSON.stringify(v))}catch(e){}}
+// 입력값·선택 지점장은 탭 단위(sessionStorage): 새로 열면 초기화, 새로고침은 유지
+function sget(k){try{return JSON.parse(sessionStorage.getItem(LS+k))}catch(e){return null}}
+function sset(k,v){try{sessionStorage.setItem(LS+k,JSON.stringify(v))}catch(e){}}
+(function(){try{Object.keys(localStorage).forEach(function(k){if(k.indexOf(LS+'in:')==0||k==LS+'cen'||k==LS+'br')localStorage.removeItem(k)})}catch(e){}})();
 function nc(c){return String(c||'').trim().replace(/^\d+\s*\.\s*/,'').replace(/^파트너스/,'')}
 function pn(b){var m=String(b||'').match(/\(([^)]+)\)\s*$/);return(m?m[1]:String(b||'')).trim()}
 function fix(D){D.pm=D.pm||{tot:{s:0,a:0},rows:[]};['pa','cx','pm'].forEach(function(k){D[k].rows.forEach(function(r){r.c=nc(r.c)})});D.auto=D.auto||{};return D}
-(function(){var d=lget('data');if(d&&d.ts>EMB.ts)DATA=d;fix(DATA)})();
+(function(){try{localStorage.removeItem(LS+'data')}catch(e){}var d=sget('data');if(d&&d.ts>EMB.ts)DATA=d;fix(DATA)})();
 function has(x){return x!==''&&x!=null&&x!==0}
 var A={};
 function au(k){return(DATA.auto[k]||[]).filter(function(r){return pn(r.b)==pn(br)&&(!r.c||r.c==cen||cen=='기타')})[0]||null}
@@ -145,8 +149,8 @@ function kv(a){return'<div class="kv">'+a.map(function(x){return'<div><span>'+x[
 /* ---------- 상태 ---------- */
 var cen,br,S;
 function blank(){return{rk:['','','',''],ac:'',ch:'',pa:'',cut:[0,0,0],dbn:0,dbs:0,cx:'',cxcut:0,st:0,ov:{pa:{},cx:{},pm:{}},add:{pa:[],cx:[],pm:[]}}}
-function load(){var b=blank(),s=lget('in:'+br)||{};for(var k in b)if(s[k]!=null)b[k]=s[k];b.ov.pm=b.ov.pm||{};b.add.pm=b.add.pm||[];S=b}
-function save(){lset('in:'+br,S)}
+function load(){var b=blank(),s=sget('in:'+br)||{};for(var k in b)if(s[k]!=null)b[k]=s[k];b.ov.pm=b.ov.pm||{};b.add.pm=b.add.pm||[];S=b}
+function save(){sset('in:'+br,S)}
 function branches(){var m={};function add(c,b){if(!b)return;var o=m[c||'']=m[c||'']||{},k=pn(b);if(!o[k]||b.indexOf('(')>=0)o[k]=b}
   ['pa','cx','pm'].forEach(function(k){DATA[k].rows.forEach(function(r){add(r.c,r.b)})});
   for(var k in DATA.auto)DATA.auto[k].forEach(function(r){add(r.c,r.b)});
@@ -155,7 +159,7 @@ function branches(){var m={};function add(c,b){if(!b)return;var o=m[c||'']=m[c||
 
 function initPick(){
   var m=branches(),cs=Object.keys(m).sort();
-  var pc=lget('cen'),pb=lget('br');
+  var pc=sget('cen'),pb=sget('br');
   cen=cs.indexOf(pc)>=0?pc:(cs.filter(function(c){return c.indexOf('강남')>=0})[0]||cs[0]);
   $('cen').innerHTML=cs.map(function(c){return'<option'+(c==cen?' selected':'')+'>'+esc(c)+'</option>'}).join('');
   fillBr(pb);
@@ -165,10 +169,10 @@ function fillBr(pref){
   var o=branches()[cen]||{},bs=Object.keys(o).map(function(k){return o[k]}).sort();bs.push('직접 입력(명단에 없음)');
   br=bs.indexOf(pref)>=0?pref:bs[0];
   $('br').innerHTML=bs.map(function(b){return'<option'+(b==br?' selected':'')+'>'+esc(b)+'</option>'}).join('');
-  lset('cen',cen);lset('br',br);load();render();
+  sset('cen',cen);sset('br',br);load();render();
 }
 $('cen').onchange=function(){cen=this.value;fillBr()};
-$('br').onchange=function(){br=this.value;lset('br',br);load();render()};
+$('br').onchange=function(){br=this.value;sset('br',br);load();render()};
 
 /* ---------- 화면 ---------- */
 function num(id,label,val,stepv,ph,force){var raw=!has(val)&&(force||ph);if(raw&&!has(ph))ph=0;return'<label class="f"><span>'+label+(raw?' <span class="tag auto">raw</span>':'')+'</span><input type="number" inputmode="decimal" min="0" step="'+(stepv||1)+'"'+(raw?' class="raw"':'')+' data-k="'+id+'" value="'+(has(val)?val:(raw?ph:''))+'" placeholder="0"></label>'}
@@ -366,7 +370,7 @@ $('fi').onchange=function(){
     var r;if(/\.xlsx?$/i.test(f.name))r={err:'엑셀 파일은 CSV로 저장한 뒤 올려 주세요'};else try{r=parse(decode(rd.result),f.name)}catch(e){r={err:'읽기 오류'}}
     if(r.spot){nd[r.spot]=r.data;ok++}else if(r.auto){for(var k in r.auto)nd.auto[k]=r.auto[k];ok++}
     msg.push(r.err?'✗ '+f.name+' → '+r.err:'✓ '+f.name+' → '+r.note);
-    if(--left==0){if(ok){var d=new Date();nd.ts=d.getTime();nd.asof=d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);DATA=nd;lset('data',DATA);initPick()}
+    if(--left==0){if(ok){var d=new Date();nd.ts=d.getTime();nd.asof=d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);DATA=nd;sset('data',DATA);initPick()}
       $('st').textContent=msg.join('\n')+(ok?'\n→ 반영 완료. 위 지점장 화면에 자동 계산되었습니다.':'');el.value=''}
   };rd.readAsArrayBuffer(f)});
 };
