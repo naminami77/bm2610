@@ -89,7 +89,7 @@ details summary{cursor:pointer;font-weight:700}
 </style>
 </head>
 <body>
-<header><h1>11월 지점장 시책 시뮬레이터 <span style="font-size:11px;opacity:.7">v4.2</span></h1><p id="asof"></p></header>
+<header><h1>11월 지점장 시책 시뮬레이터 <span style="font-size:11px;opacity:.7">v4.4</span></h1><p id="asof"></p></header>
 <main>
 <div class="card"><div class="pick">
 <label class="f"><span>센터</span><select id="cen"></select></label>
@@ -153,6 +153,8 @@ function kv(a){return'<div class="kv">'+a.map(function(x){return'<div><span>'+x[
 
 /* ---------- 상태 ---------- */
 var cen,br,S,LAST={};
+var PLAN_URL='https://script.google.com/macros/s/AKfycbzrY31PwJGo4UFmzHSlzVdSX2d6bCNcgtiY3xYt8GYhg1ofaDSpVpKTR5CjrUybAORgfA/exec';  // ← Apps Script 웹앱 URL (배포 후 여기에 붙여넣기). 비우면 CSV 내보내기만 동작
+var PLAN_SHEET='https://docs.google.com/spreadsheets/d/15gXR2hzy2X0JsBQrCbPQQ2LxNL39mDUr8wRU8FQEoi8/edit';
 function blank(){return{rk:['','','',''],ac:'',ch:'',pa:'',cut:[0,0,0,0,0,0],tg:'',dbn:0,dbs:0,cx:'',cxcut:0,st:0,ov:{pa:{},cx:{},pm:{}},add:{pa:[],cx:[],pm:[]}}}
 function load(){var b=blank(),s=sget('in:'+br)||{};for(var k in b)if(s[k]!=null)b[k]=s[k];b.ov.pm=b.ov.pm||{};b.add.pm=b.add.pm||[];S=b}
 function save(){sset('in:'+br,S)}
@@ -216,7 +218,7 @@ function pmHtml(){
 function render(){
   var h='',T='<span class="tag auto">raw 자동</span>',r2=function(x){return Math.round(x/100)/100};
   A={rk:au('rk'),ac:au('ac'),ch:au('ch'),pa:au('pa'),cx:au('cx')};
-  h+='<div class="card sum"><small>'+esc(br)+' · 11월 예상 시책금</small><div class="big" id="o_tot"></div><div class="row"><span id="o_now"></span><span id="o_2y"></span><span id="o_ctr"></span></div><div class="btns" style="margin-top:10px"><button type="button" id="mkcard" style="background:#fff;color:var(--red);border-color:#fff;font-weight:700">🖼 이미지 카드 저장</button></div></div>';
+  h+='<div class="card sum"><small>'+esc(br)+' · 11월 예상 시책금</small><div class="big" id="o_tot"></div><div class="row"><span id="o_now"></span><span id="o_2y"></span><span id="o_ctr"></span></div><div class="btns" style="margin-top:10px"><button type="button" id="mkcard" style="background:#fff;color:var(--red);border-color:#fff;font-weight:700">🖼 이미지 카드 저장</button><button type="button" id="mkplan" style="background:#fff;color:var(--red);border-color:#fff;font-weight:700">📊 계획 저장 (시트)</button></div><div id="o_plan" style="font-size:12.5px;margin-top:6px;opacity:.9"></div></div>';
   h+='<div class="card"><h2>파트너스 3종 시책 '+(A.rk||A.ac||A.ch?T:'')+'<span class="tag">수기 입력</span><button class="s std" type="button" data-std="1">📋 시책 기준표</button></h2><p class="desc">Rookie는 실적 시점별 인당 지급 · <b>Active는 목표 달성율별 인당 지급(NEW)</b> · Chance는 인원 구간</p><h3>Rookie '+(A.rk&&A.rk.d?T:'')+' <small>· 응시 후 영업일 구간별 인원</small></h3><div class="grid g4">'+ROOKIE.map(function(r,i){return num('rk'+i,r[0]+' ('+r[1]+'만)',S.rk[i],1,A.rk&&A.rk.d?A.rk.d[i]:0,!!(A.rk&&A.rk.d))}).join('')+'</div><div class="grid g4" style="margin-top:8px">'+num('ac','Active 인원',S.ac,1,A.ac&&A.ac.n)+num('tg','Active 목표 (명)',S.tg,1,tgtOf()||0,!!tgtOf())+num('ch','Chance 인원',S.ch,1,A.ch&&A.ch.n)+'</div><div id="o_3h"></div><div class="src">불러온 raw ('+DATA.asof+'): '+(Object.keys(DATA.auto).length?Object.keys(DATA.auto).map(function(k){return KN[k]+' '+DATA.auto[k].length+'행'}).join(' · '):'없음')+'</div><div class="res"><span>3종 합계</span><b id="o_3"></b></div></div>';
   h+='<div class="card"><h2>파트너스 성과 인센티브 Ⅰ·Ⅱ '+(A.pa?T:'')+'<span class="tag">수기 입력</span><button class="s std" type="button" data-std="pa">📋 시책 기준표</button></h2><p class="desc">11.1~11.30 파트너스 전체 실적(증권당 최대 20만, 실손 제외). 원 단위 입력(만원 단위로 넣어도 자동 환산). Ⅰ 초회 지급 + Ⅱ 2차년도 지급</p>'+num('pa','11월 파트너스 매출 (원)',S.pa,10000,A.pa&&Math.round(A.pa.s))+'<div id="o_pah"></div><div class="res"><span>Ⅰ 초회 + Ⅱ 2차년도</span><b id="o_pa"></b></div></div>';
   h+='<div class="card"><h2>컷오프 <span class="tag">수기 체크</span></h2><p class="desc">미달 항목마다 3종 + 성과 인센티브에 90% 적용 (11월 6개 항목) · Active 달성율은 위 입력값으로 자동 판정</p>'+['1차월 유실적율 50% 미만','2~3차월 합산 유실적율 50% 미만','<span id="cut_ac">Active 목표 달성율 70% 미만</span> <span class="tag auto">자동</span>','KMV율 2,500% 미만','2~4회차 수금율 93% 미만','당월 위촉율 85% 미만 (6개월 합산 85% 이상이면 제외)'].map(function(t,i){return'<label class="chk"><input type="checkbox" data-c="'+i+'"'+(S.cut[i]?' checked':'')+(i==2?' id="cut2"':'')+'>'+t+'</label>'}).join('')+'<div id="o_cut" class="warn"></div></div>';
@@ -361,7 +363,24 @@ function showCard(){
   openStd('이미지 카드',br+' · '+DATA.asof,h);
   var sb=$('shr');if(navigator.share&&navigator.canShare){sb.onclick=function(){cv.toBlob(function(b){var f=new File([b],fn,{type:'image/png'});if(navigator.canShare({files:[f]}))navigator.share({files:[f],title:fn});else alert('이 브라우저는 파일 공유를 지원하지 않습니다. PNG 저장을 이용하세요.')})}}else sb.style.display='none';
 }
-$('app').addEventListener('click',function(e){if(e.target.id=='mkcard')showCard()});
+$('app').addEventListener('click',function(e){if(e.target.id=='mkcard')showCard();if(e.target.id=='mkplan')savePlan()});
+
+/* ---------- 계획 저장 (구글 시트) ---------- */
+var PLAN_COLS=['지점장','센터','면담일시','Active목표(명)','Rookie 5일','Rookie 7일','Rookie 9일','Rookie 초과','Active 인원','Active 달성율','Chance 인원','파트너스 매출(원)','교차 매출(원)','전략상품(원)','컷오프 미달','3종(원)','성과인센 Ⅰ+Ⅱ(원)','교차(원)','예상 시책금 합계(원)','초회·익월(원)','2차년도(원)','메모'];
+function planRow(memo){var D=LAST,d=new Date(),ts=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  var w=function(m){return Math.round(m*10000)};
+  return[D.br,D.cen,ts,D.tg||'',D.rkD[0],D.rkD[1],D.rkD[2],D.rkD[3],D.acN,D.rate!=null?Math.round(D.rate)+'%':'',D.chN,w(D.v),w(D.c),w(mw(S.st)),D.k,w(D.rk+D.ac+D.ch),w(D.p1+D.p2),w(D.c1+D.c2+D.st*2),w(D.tot),w(D.nowT),w(D.y2T),memo||'']}
+function savePlan(){
+  var memo=prompt(br+' 계획을 저장합니다. 메모(선택):','');if(memo===null)return;
+  var row=planRow(memo),st=$('o_plan');
+  var plans=lget('plans')||{};plans[cen+'|'+br]=row;lset('plans',plans);
+  if(!PLAN_URL){st.innerHTML='✓ 이 기기에 저장됨 ('+Object.keys(plans).length+'명) · 시트 연동 전 — <a href="#" id="plancsv" style="color:#fff;text-decoration:underline">계획 CSV 내보내기</a>';$('plancsv').onclick=function(e){e.preventDefault();exportPlans()};return}
+  st.textContent='시트에 저장 중…';
+  fetch(PLAN_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({row:row,cols:PLAN_COLS})}).then(function(){st.innerHTML='✓ 시트에 저장됨 '+row[2]+' · <a href="'+PLAN_SHEET+'" target="_blank" style="color:#fff;text-decoration:underline">시트 열기</a>'}).catch(function(){st.textContent='✗ 시트 저장 실패 — 네트워크 확인'})
+}
+function exportPlans(){var plans=lget('plans')||{},rows=[PLAN_COLS].concat(Object.keys(plans).sort().map(function(k){return plans[k]}));
+  var csv='﻿'+rows.map(function(r){return r.map(function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')}).join('\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));var d=new Date();a.download='지점장_계획_'+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'.csv';a.click()}
 function hideStd(){$('std-ov').hidden=true;document.body.style.overflow=''}
 $('std-ov').addEventListener('click',function(e){if(e.target===this||e.target.classList.contains('x'))hideStd()});
 document.addEventListener('keydown',function(e){if(e.key=='Escape')hideStd()});
